@@ -1,0 +1,43 @@
+{
+  "title": "Connections Aryayh addition",
+  "subtitle": "Pick four words that share a connection.",
+  "maxMistakes": 6,
+  "groups": [
+    {
+      "label": "Aryoosh likes",
+      "words": [
+        "Mexican food",
+        "Vibe coding",
+        "Monkeys",
+        "Cheese"
+      ]
+    },
+    {
+      "label": "Aryoosh HATES grrr",
+      "words": [
+        "Sirens",
+        "Beetroot",
+        "Mondays",
+        "Itchy patuei"
+      ]
+    },
+    {
+      "label": "____Bubu",
+      "words": [
+        "La",
+        "Lei",
+        "Baba",
+        "Honey"
+      ]
+    },
+    {
+      "label": "Schnitzel",
+      "words": [
+        "Schnitzel",
+        "Shnizel",
+        "Snichel",
+        "Schiszel"
+      ]
+    }
+  ]
+}
