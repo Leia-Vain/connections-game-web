@@ -26,6 +26,7 @@ const state = {
   mistakes: 0,
   over: false,
   maxMistakes: 4,
+  loadError: "",
 };
 
 function shuffle(array) {
@@ -103,6 +104,31 @@ function parseHashPuzzle() {
     }
   }
   return null;
+}
+
+function parsePuzzleIdFromQuery() {
+  const params = new URLSearchParams(window.location.search || "");
+  const raw = (params.get("id") || "").trim();
+  if (!raw) {
+    return "";
+  }
+  if (!/^[a-z0-9][a-z0-9-]{0,80}$/i.test(raw)) {
+    return "";
+  }
+  return raw.toLowerCase();
+}
+
+async function fetchPuzzleById(id) {
+  try {
+    const url = `puzzles/${encodeURIComponent(id)}.json`;
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) {
+      return null;
+    }
+    return await response.json();
+  } catch (error) {
+    return null;
+  }
 }
 
 function parseStoredPuzzle() {
@@ -307,9 +333,20 @@ function wireActions() {
 }
 
 function init() {
+  initialize();
+}
+
+async function initialize() {
   const fromHash = parseHashPuzzle();
   const fromStorage = parseStoredPuzzle();
-  state.puzzle = fromHash || fromStorage || CONNECTIONS_PUZZLE;
+  const puzzleId = parsePuzzleIdFromQuery();
+  const fromId = fromHash ? null : (puzzleId ? await fetchPuzzleById(puzzleId) : null);
+
+  if (puzzleId && !fromId && !fromHash) {
+    state.loadError = `Could not load puzzle id "${puzzleId}". Showing fallback puzzle.`;
+  }
+
+  state.puzzle = fromHash || fromId || fromStorage || CONNECTIONS_PUZZLE;
 
   try {
     validatePuzzle(state.puzzle);
@@ -322,6 +359,9 @@ function init() {
         : 4;
     wireActions();
     restartGame();
+    if (state.loadError) {
+      setMessage(state.loadError, true);
+    }
   } catch (error) {
     setMessage(error.message || "Invalid puzzle configuration.", true);
     elements.submitBtn.disabled = true;

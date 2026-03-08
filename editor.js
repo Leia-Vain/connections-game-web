@@ -1,6 +1,7 @@
 /* global CONNECTIONS_PUZZLE */
 
 const PUZZLE_STORAGE_KEY = "connections_custom_puzzle_v1";
+const GITHUB_PREFS_STORAGE_KEY = "connections_github_prefs_v1";
 const GROUP_COUNT = 4;
 const WORDS_PER_GROUP = 4;
 const DEFAULT_PUBLIC_GAME_URL = "https://leia-vain.github.io/connections-game-web/index.html";
@@ -14,6 +15,12 @@ const els = {
   openGame: document.getElementById("open-game"),
   shareBtn: document.getElementById("share-link-btn"),
   clearLocal: document.getElementById("clear-local"),
+  ghToken: document.getElementById("gh-token"),
+  ghOwner: document.getElementById("gh-owner"),
+  ghRepo: document.getElementById("gh-repo"),
+  ghBranch: document.getElementById("gh-branch"),
+  ghSlug: document.getElementById("gh-slug"),
+  publishGitHub: document.getElementById("publish-github"),
   shareLink: document.getElementById("share-link"),
   copyLink: document.getElementById("copy-link"),
   status: document.getElementById("status"),
@@ -55,6 +62,10 @@ function validatePuzzle(puzzle) {
 
 function encodeShortField(value) {
   return encodeURIComponent(String(value || "").trim()).replace(/%20/g, "+");
+}
+
+function toBase64Utf8(text) {
+  return btoa(unescape(encodeURIComponent(text)));
 }
 
 function serializeShortPuzzle(puzzle) {
@@ -163,6 +174,43 @@ function loadInitialPuzzle() {
   return clonePuzzle(CONNECTIONS_PUZZLE);
 }
 
+function loadGitHubPrefs() {
+  try {
+    const raw = localStorage.getItem(GITHUB_PREFS_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    return JSON.parse(raw);
+  } catch (error) {
+    return null;
+  }
+}
+
+function saveGitHubPrefs(owner, repo, branch) {
+  const prefs = { owner, repo, branch };
+  localStorage.setItem(GITHUB_PREFS_STORAGE_KEY, JSON.stringify(prefs));
+}
+
+function sanitizeSlug(raw) {
+  const value = String(raw || "").trim().toLowerCase();
+  const cleaned = value
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return cleaned.slice(0, 80);
+}
+
+function buildPagesPuzzleUrl(owner, repo, slug) {
+  const domainOwner = owner.toLowerCase();
+  return `https://${domainOwner}.github.io/${repo}/index.html?id=${encodeURIComponent(slug)}`;
+}
+
+function githubContentPath(owner, repo, path, branch) {
+  const encodedPath = path.split("/").map((part) => encodeURIComponent(part)).join("/");
+  const encodedBranch = encodeURIComponent(branch);
+  return `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}?ref=${encodedBranch}`;
+}
+
 function handleSaveLocal() {
   try {
     const puzzle = readForm();
@@ -198,6 +246,83 @@ function handleGenerateShareLink() {
   }
 }
 
+async function handlePublishGitHub() {
+  try {
+    const puzzle = readForm();
+    validatePuzzle(puzzle);
+
+    const token = (els.ghToken.value || "").trim();
+    const owner = (els.ghOwner.value || "").trim();
+    const repo = (els.ghRepo.value || "").trim();
+    const branch = (els.ghBranch.value || "").trim() || "master";
+    const slug = sanitizeSlug(els.ghSlug.value);
+
+    if (!token) {
+      throw new Error("GitHub token is required for publish.");
+    }
+    if (!owner || !repo) {
+      throw new Error("GitHub owner and repo are required.");
+    }
+    if (!slug) {
+      throw new Error("Puzzle ID is required (letters/numbers/hyphen).");
+    }
+
+    const path = `puzzles/${slug}.json`;
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    };
+
+    let sha = null;
+    const getUrl = githubContentPath(owner, repo, path, branch);
+    const existing = await fetch(getUrl, { headers });
+    if (existing.ok) {
+      const body = await existing.json();
+      sha = body.sha || null;
+    } else if (existing.status !== 404) {
+      const err = await existing.json().catch(() => ({}));
+      throw new Error(err?.message || `GitHub lookup failed (${existing.status}).`);
+    }
+
+    const payload = `${JSON.stringify(puzzle, null, 2)}\n`;
+    const putUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path
+      .split("/")
+      .map((part) => encodeURIComponent(part))
+      .join("/")}`;
+
+    const putBody = {
+      message: `Publish puzzle: ${slug}`,
+      content: toBase64Utf8(payload),
+      branch,
+    };
+    if (sha) {
+      putBody.sha = sha;
+    }
+
+    const write = await fetch(putUrl, {
+      method: "PUT",
+      headers: {
+        ...headers,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(putBody),
+    });
+
+    if (!write.ok) {
+      const err = await write.json().catch(() => ({}));
+      throw new Error(err?.message || `GitHub write failed (${write.status}).`);
+    }
+
+    saveGitHubPrefs(owner, repo, branch);
+    const publicLink = buildPagesPuzzleUrl(owner, repo, slug);
+    els.shareLink.value = publicLink;
+    setStatus("Published to GitHub. Public link generated.");
+  } catch (error) {
+    setStatus(error.message || "Failed to publish to GitHub.", true);
+  }
+}
+
 function handleCopyLink() {
   const value = els.shareLink.value.trim();
   if (!value) {
@@ -219,11 +344,18 @@ function handleClearLocal() {
 function init() {
   const puzzle = loadInitialPuzzle();
   renderForm(puzzle);
+  const prefs = loadGitHubPrefs();
+  if (prefs) {
+    els.ghOwner.value = prefs.owner || els.ghOwner.value;
+    els.ghRepo.value = prefs.repo || els.ghRepo.value;
+    els.ghBranch.value = prefs.branch || els.ghBranch.value;
+  }
   setStatus("Editor ready. Fill 4 groups x 4 words.");
 
   els.saveLocal.addEventListener("click", handleSaveLocal);
   els.openGame.addEventListener("click", handleOpenGame);
   els.shareBtn.addEventListener("click", handleGenerateShareLink);
+  els.publishGitHub.addEventListener("click", handlePublishGitHub);
   els.copyLink.addEventListener("click", handleCopyLink);
   els.clearLocal.addEventListener("click", handleClearLocal);
 }

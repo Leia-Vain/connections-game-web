@@ -37,6 +37,33 @@
       <button id="clear-local" type="button">Clear Local Puzzle</button>
     </section>
 
+    <section class="card meta-grid">
+      <label>
+        GitHub Token
+        <input id="gh-token" type="password" placeholder="ghp_... or fine-grained token">
+      </label>
+      <label>
+        GitHub Owner
+        <input id="gh-owner" type="text" value="Leia-Vain">
+      </label>
+      <label>
+        GitHub Repo
+        <input id="gh-repo" type="text" value="connections-game-web">
+      </label>
+      <label>
+        Branch
+        <input id="gh-branch" type="text" value="master">
+      </label>
+      <label>
+        Puzzle ID (slug)
+        <input id="gh-slug" type="text" placeholder="my-puzzle-1">
+      </label>
+      <label>
+        Publish
+        <button id="publish-github" type="button">Save To GitHub + Get Link</button>
+      </label>
+    </section>
+
     <section class="card">
       <h2>Share Link</h2>
       <textarea id="share-link" rows="4" readonly></textarea>
@@ -44,6 +71,7 @@
         <button id="copy-link" type="button">Copy Link</button>
       </div>
       <p class="note">Anyone opening this link gets play mode only. Your editor remains private on this page.</p>
+      <p class="note">GitHub token is used only for the publish request and is not saved by this page.</p>
     </section>
 
     <section id="status" class="status" aria-live="polite"></section>
