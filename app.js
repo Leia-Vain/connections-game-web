@@ -1,374 +1,206 @@
-/* global CONNECTIONS_PUZZLE */
-
-const solvedClasses = ["bg1", "bg2", "bg3", "bg4"];
-const PUZZLE_STORAGE_KEY = "connections_custom_puzzle_v1";
-
-const elements = {
-  title: document.getElementById("title"),
-  subtitle: document.getElementById("subtitle"),
-  message: document.getElementById("message"),
-  board: document.getElementById("board"),
-  solved: document.getElementById("solved-groups"),
-  mistakesLeft: document.getElementById("mistakes-left"),
-  foundCount: document.getElementById("found-count"),
-  selectedCount: document.getElementById("selected-count"),
-  submitBtn: document.getElementById("submit-btn"),
-  deselectBtn: document.getElementById("deselect-btn"),
-  shuffleBtn: document.getElementById("shuffle-btn"),
-  restartBtn: document.getElementById("restart-btn"),
-};
+const dataset = window.RICHEST_PARTNER_DATA;
+if (!dataset || !Array.isArray(dataset.rows)) {
+  throw new Error("Missing dataset. Run build_dataset.py first.");
+}
 
 const state = {
-  puzzle: null,
-  words: [],
-  selected: new Set(),
-  solvedGroups: [],
-  mistakes: 0,
-  over: false,
-  maxMistakes: 4,
-  loadError: "",
+  query: "",
+  sort: "rank",
+  minWorth: 0,
 };
 
-function shuffle(array) {
-  const out = [...array];
-  for (let i = out.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
-}
+const controls = {
+  search: document.getElementById("search"),
+  sort: document.getElementById("sort"),
+  minWorth: document.getElementById("min-worth"),
+  worthLabel: document.getElementById("worth-label"),
+  reset: document.getElementById("reset"),
+};
 
-function normalize(word) {
-  return String(word).trim().toLowerCase();
-}
+const tableBody = document.getElementById("rows");
+const scatter = document.getElementById("scatter");
 
-function decodeBase64Url(text) {
-  const padded = text.replace(/-/g, "+").replace(/_/g, "/");
-  const fill = padded.length % 4 === 0 ? 0 : 4 - (padded.length % 4);
-  const normalized = padded + "=".repeat(fill);
-  return decodeURIComponent(escape(atob(normalized)));
-}
-
-function decodeShortField(value) {
-  return decodeURIComponent(String(value || "").replace(/\+/g, "%20"));
-}
-
-function parseShortPuzzle(payload) {
-  const parts = payload.split("~");
-  if (!parts.length || parts[0] !== "v1") {
-    return null;
-  }
-  if (parts.length !== 24) {
-    return null;
-  }
-  const maxMistakes = Number(parts[1]);
-  const title = decodeShortField(parts[2]);
-  const subtitle = decodeShortField(parts[3]);
-  if (!Number.isInteger(maxMistakes) || maxMistakes <= 0) {
-    return null;
-  }
-  let index = 4;
-  const groups = [];
-  for (let g = 0; g < 4; g += 1) {
-    const label = decodeShortField(parts[index]);
-    const words = [
-      decodeShortField(parts[index + 1]),
-      decodeShortField(parts[index + 2]),
-      decodeShortField(parts[index + 3]),
-      decodeShortField(parts[index + 4]),
-    ];
-    index += 5;
-    groups.push({ label, words });
-  }
-  return { title, subtitle, maxMistakes, groups };
-}
-
-function parseHashPuzzle() {
-  const hash = window.location.hash || "";
-  if (hash.startsWith("#s=")) {
-    const shortPayload = hash.slice(3).trim();
-    if (!shortPayload) {
-      return null;
-    }
-    return parseShortPuzzle(shortPayload);
-  }
-  if (hash.startsWith("#p=")) {
-    const encoded = hash.slice(3).trim();
-    if (!encoded) {
-      return null;
-    }
-    try {
-      return JSON.parse(decodeBase64Url(encoded));
-    } catch (error) {
-      return null;
-    }
-  }
-  return null;
-}
-
-function parsePuzzleIdFromQuery() {
-  const params = new URLSearchParams(window.location.search || "");
-  const raw = (params.get("id") || "").trim();
-  if (!raw) {
-    return "";
-  }
-  if (!/^[a-z0-9][a-z0-9-]{0,80}$/i.test(raw)) {
-    return "";
-  }
-  return raw.toLowerCase();
-}
-
-async function fetchPuzzleById(id) {
-  try {
-    const url = `puzzles/${encodeURIComponent(id)}.json`;
-    const response = await fetch(url, { cache: "no-store" });
-    if (!response.ok) {
-      return null;
-    }
-    return await response.json();
-  } catch (error) {
-    return null;
-  }
-}
-
-function parseStoredPuzzle() {
-  try {
-    const raw = localStorage.getItem(PUZZLE_STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
-    return JSON.parse(raw);
-  } catch (error) {
-    return null;
-  }
-}
-
-function validatePuzzle(puzzle) {
-  if (!puzzle || !Array.isArray(puzzle.groups) || puzzle.groups.length !== 4) {
-    throw new Error("Puzzle must have exactly 4 groups.");
-  }
-  const allWords = [];
-  puzzle.groups.forEach((group, index) => {
-    if (!group.label || !Array.isArray(group.words) || group.words.length !== 4) {
-      throw new Error(`Group ${index + 1} must include label and 4 words.`);
-    }
-    group.words.forEach((word) => allWords.push(normalize(word)));
+function filteredRows() {
+  let rows = dataset.rows.filter((row) => {
+    const matchesWorth = row.worth_billion_usd >= state.minWorth;
+    const q = state.query.trim().toLowerCase();
+    const matchesQuery =
+      !q ||
+      row.person_name.toLowerCase().includes(q) ||
+      row.partner_name.toLowerCase().includes(q);
+    return matchesWorth && matchesQuery;
   });
-  const unique = new Set(allWords);
-  if (unique.size !== 16) {
-    throw new Error("Puzzle must have exactly 16 unique words.");
+
+  rows = [...rows];
+  if (state.sort === "rank") {
+    rows.sort((a, b) => a.rank - b.rank);
+  } else if (state.sort === "worth") {
+    rows.sort((a, b) => b.worth_billion_usd - a.worth_billion_usd);
+  } else if (state.sort === "partner_age") {
+    rows.sort((a, b) => b.partner_age - a.partner_age);
+  } else if (state.sort === "age_gap") {
+    rows.sort((a, b) => b.age_gap_partner_minus_billionaire - a.age_gap_partner_minus_billionaire);
   }
+  return rows;
 }
 
-function setMessage(text, isError = false) {
-  elements.message.textContent = text;
-  elements.message.classList.toggle("error", isError);
+function avg(values) {
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-function updateHud() {
-  elements.mistakesLeft.textContent = String(state.maxMistakes - state.mistakes);
-  elements.foundCount.textContent = `${state.solvedGroups.length} / 4`;
-  elements.selectedCount.textContent = `${state.selected.size} / 4`;
-}
-
-function renderSolvedGroups() {
-  elements.solved.innerHTML = "";
-  state.solvedGroups.forEach((group, i) => {
-    const card = document.createElement("article");
-    card.className = `solved-card ${solvedClasses[i % solvedClasses.length]}`;
-    const words = group.words.join(", ");
-    card.innerHTML = `<h3>${group.label}</h3><p>${words}</p>`;
-    elements.solved.appendChild(card);
-  });
-}
-
-function isWordSolved(word) {
-  return state.solvedGroups.some((group) =>
-    group.words.some((groupWord) => normalize(groupWord) === normalize(word))
-  );
-}
-
-function renderBoard() {
-  elements.board.innerHTML = "";
-  state.words.forEach((word) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "tile";
-    button.textContent = word;
-    if (state.selected.has(word)) {
-      button.classList.add("selected");
-    }
-    if (isWordSolved(word)) {
-      button.classList.add("hidden");
-      button.disabled = true;
-    }
-    button.addEventListener("click", () => toggleSelect(word));
-    elements.board.appendChild(button);
-  });
-}
-
-function toggleSelect(word) {
-  if (state.over || isWordSolved(word)) {
+function renderMetrics(rows) {
+  if (!rows.length) {
+    document.getElementById("avg-worth").textContent = "-";
+    document.getElementById("avg-rich-age").textContent = "-";
+    document.getElementById("avg-partner-age").textContent = "-";
+    document.getElementById("avg-gap").textContent = "-";
     return;
   }
-  if (state.selected.has(word)) {
-    state.selected.delete(word);
-  } else {
-    if (state.selected.size >= 4) {
-      setMessage("You can only select 4 words at a time.", true);
-      return;
-    }
-    state.selected.add(word);
-  }
-  setMessage("Select four connected words.");
-  updateHud();
-  renderBoard();
+  document.getElementById("avg-worth").textContent = `${avg(rows.map((r) => r.worth_billion_usd)).toFixed(1)}B`;
+  document.getElementById("avg-rich-age").textContent = `${avg(rows.map((r) => r.billionaire_age)).toFixed(1)}`;
+  document.getElementById("avg-partner-age").textContent = `${avg(rows.map((r) => r.partner_age)).toFixed(1)}`;
+  document.getElementById("avg-gap").textContent = `${avg(rows.map((r) => r.age_gap_partner_minus_billionaire)).toFixed(1)}`;
 }
 
-function deselectAll() {
-  state.selected.clear();
-  updateHud();
-  renderBoard();
-}
-
-function getMatchingGroup(selectedWords) {
-  const selectedNormalized = selectedWords.map(normalize).sort();
-  return state.puzzle.groups.find((group) => {
-    if (state.solvedGroups.includes(group)) {
-      return false;
-    }
-    const groupNormalized = group.words.map(normalize).sort();
-    return groupNormalized.every((word, i) => word === selectedNormalized[i]);
+function renderTable(rows) {
+  tableBody.innerHTML = "";
+  rows.forEach((row) => {
+    const gapClass = row.age_gap_partner_minus_billionaire >= 0 ? "positive" : "negative";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>#${row.rank}</td>
+      <td>${row.person_name}</td>
+      <td>${row.worth_billion_usd.toFixed(1)}</td>
+      <td>${row.billionaire_age}</td>
+      <td>${row.partner_name}</td>
+      <td>${row.partner_age}</td>
+      <td class="${gapClass}">${row.age_gap_partner_minus_billionaire}</td>
+    `;
+    tableBody.appendChild(tr);
   });
 }
 
-function oneAwayHint(selectedWords) {
-  const selectedSet = new Set(selectedWords.map(normalize));
-  return state.puzzle.groups.some((group) => {
-    if (state.solvedGroups.includes(group)) {
-      return false;
-    }
-    const overlap = group.words
-      .map(normalize)
-      .filter((word) => selectedSet.has(word)).length;
-    return overlap === 3;
-  });
-}
+function renderScatter(rows) {
+  const w = 680;
+  const h = 360;
+  const pad = { top: 24, right: 20, bottom: 40, left: 54 };
+  const innerW = w - pad.left - pad.right;
+  const innerH = h - pad.top - pad.bottom;
 
-function revealAll() {
-  state.puzzle.groups.forEach((group) => {
-    if (!state.solvedGroups.includes(group)) {
-      state.solvedGroups.push(group);
-    }
-  });
-  state.over = true;
-  renderSolvedGroups();
-  renderBoard();
-}
+  scatter.innerHTML = "";
 
-function submitSelection() {
-  if (state.over) {
-    return;
-  }
-  const selectedWords = Array.from(state.selected);
-  if (selectedWords.length !== 4) {
-    setMessage("Select exactly 4 words before submitting.", true);
-    return;
-  }
-  const match = getMatchingGroup(selectedWords);
-  if (match) {
-    state.solvedGroups.push(match);
-    state.selected.clear();
-    renderSolvedGroups();
-    renderBoard();
-    updateHud();
-    if (state.solvedGroups.length === 4) {
-      state.over = true;
-      setMessage("You solved all 4 groups.");
-      return;
-    }
-    setMessage("Correct group found.");
+  if (!rows.length) {
     return;
   }
 
-  state.mistakes += 1;
-  const left = state.maxMistakes - state.mistakes;
-  if (left <= 0) {
-    updateHud();
-    revealAll();
-    setMessage("No mistakes left. Puzzle over.", true);
-    return;
+  const worthValues = rows.map((r) => r.worth_billion_usd);
+  const partnerAgeValues = rows.map((r) => r.partner_age);
+  const minX = Math.min(...worthValues) - 5;
+  const maxX = Math.max(...worthValues) + 5;
+  const minY = Math.min(...partnerAgeValues) - 2;
+  const maxY = Math.max(...partnerAgeValues) + 2;
+
+  const x = (value) => pad.left + ((value - minX) / (maxX - minX || 1)) * innerW;
+  const y = (value) => pad.top + innerH - ((value - minY) / (maxY - minY || 1)) * innerH;
+
+  const axisColor = "#8ea0ba";
+  const draw = (tag, attrs) => {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+    scatter.appendChild(el);
+    return el;
+  };
+
+  draw("line", { x1: pad.left, y1: pad.top + innerH, x2: pad.left + innerW, y2: pad.top + innerH, stroke: axisColor });
+  draw("line", { x1: pad.left, y1: pad.top, x2: pad.left, y2: pad.top + innerH, stroke: axisColor });
+
+  for (let i = 0; i <= 4; i += 1) {
+    const t = i / 4;
+    const xVal = minX + t * (maxX - minX);
+    const yVal = minY + t * (maxY - minY);
+    const xPos = x(xVal);
+    const yPos = y(yVal);
+
+    draw("line", { x1: xPos, y1: pad.top + innerH, x2: xPos, y2: pad.top + innerH + 5, stroke: axisColor });
+    draw("line", { x1: pad.left - 5, y1: yPos, x2: pad.left, y2: yPos, stroke: axisColor });
+
+    const xt = draw("text", { x: xPos, y: pad.top + innerH + 18, fill: "#5f6f87", "text-anchor": "middle", "font-size": "11" });
+    xt.textContent = xVal.toFixed(0);
+    const yt = draw("text", { x: pad.left - 9, y: yPos + 3, fill: "#5f6f87", "text-anchor": "end", "font-size": "11" });
+    yt.textContent = yVal.toFixed(0);
   }
-  updateHud();
-  const hint = oneAwayHint(selectedWords) ? " One away." : "";
-  setMessage(`Not a group.${hint} Mistakes left: ${left}.`, true);
-}
 
-function restartGame() {
-  state.words = shuffle(state.puzzle.groups.flatMap((group) => group.words));
-  state.selected.clear();
-  state.solvedGroups = [];
-  state.mistakes = 0;
-  state.over = false;
-  updateHud();
-  renderSolvedGroups();
-  renderBoard();
-  setMessage("Select four connected words.");
-}
-
-function wireActions() {
-  elements.submitBtn.addEventListener("click", submitSelection);
-  elements.deselectBtn.addEventListener("click", deselectAll);
-  elements.shuffleBtn.addEventListener("click", () => {
-    if (state.over) {
-      return;
-    }
-    const unsolved = state.words.filter((word) => !isWordSolved(word));
-    const solved = state.words.filter((word) => isWordSolved(word));
-    state.words = shuffle(unsolved).concat(solved);
-    renderBoard();
-    setMessage("Shuffled unsolved words.");
+  const xLabel = draw("text", {
+    x: pad.left + innerW / 2,
+    y: h - 10,
+    fill: "#33415c",
+    "text-anchor": "middle",
+    "font-size": "12",
   });
-  elements.restartBtn.addEventListener("click", restartGame);
+  xLabel.textContent = "Worth (USD billions)";
+
+  const yLabel = draw("text", {
+    x: 14,
+    y: pad.top + innerH / 2,
+    fill: "#33415c",
+    "text-anchor": "middle",
+    "font-size": "12",
+    transform: `rotate(-90, 14, ${pad.top + innerH / 2})`,
+  });
+  yLabel.textContent = "Partner age";
+
+  rows.forEach((row) => {
+    const circle = draw("circle", {
+      cx: x(row.worth_billion_usd),
+      cy: y(row.partner_age),
+      r: 6,
+      fill: "#0b7285",
+      opacity: "0.85",
+      stroke: "#083344",
+      "stroke-width": "1",
+    });
+    const tip = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    tip.textContent = `${row.person_name}: worth ${row.worth_billion_usd}B, partner age ${row.partner_age}`;
+    circle.appendChild(tip);
+  });
 }
 
-function init() {
-  initialize();
+function render() {
+  const rows = filteredRows();
+  renderMetrics(rows);
+  renderTable(rows);
+  renderScatter(rows);
+  controls.worthLabel.textContent = `$${state.minWorth}B`;
 }
 
-async function initialize() {
-  const fromHash = parseHashPuzzle();
-  const fromStorage = parseStoredPuzzle();
-  const puzzleId = parsePuzzleIdFromQuery();
-  const fromId = fromHash ? null : (puzzleId ? await fetchPuzzleById(puzzleId) : null);
+function setup() {
+  const subtitle = document.getElementById("subhead");
+  subtitle.textContent =
+    `As of ${dataset.as_of_date}. Data skips people with unknown partner age and keeps the richest-ranked 10 with full fields.`;
 
-  if (puzzleId && !fromId && !fromHash) {
-    state.loadError = `Could not load puzzle id "${puzzleId}". Showing fallback puzzle.`;
-  }
+  controls.search.addEventListener("input", (event) => {
+    state.query = event.target.value;
+    render();
+  });
+  controls.sort.addEventListener("change", (event) => {
+    state.sort = event.target.value;
+    render();
+  });
+  controls.minWorth.addEventListener("input", (event) => {
+    state.minWorth = Number(event.target.value);
+    render();
+  });
+  controls.reset.addEventListener("click", () => {
+    state.query = "";
+    state.sort = "rank";
+    state.minWorth = 0;
+    controls.search.value = "";
+    controls.sort.value = "rank";
+    controls.minWorth.value = "0";
+    render();
+  });
 
-  state.puzzle = fromHash || fromId || fromStorage || CONNECTIONS_PUZZLE;
-
-  try {
-    validatePuzzle(state.puzzle);
-    elements.title.textContent = state.puzzle.title || "Connections";
-    elements.subtitle.textContent =
-      state.puzzle.subtitle || "Pick four words that share a connection.";
-    state.maxMistakes =
-      Number.isInteger(state.puzzle.maxMistakes) && state.puzzle.maxMistakes > 0
-        ? state.puzzle.maxMistakes
-        : 4;
-    wireActions();
-    restartGame();
-    if (state.loadError) {
-      setMessage(state.loadError, true);
-    }
-  } catch (error) {
-    setMessage(error.message || "Invalid puzzle configuration.", true);
-    elements.submitBtn.disabled = true;
-    elements.deselectBtn.disabled = true;
-    elements.shuffleBtn.disabled = true;
-    elements.restartBtn.disabled = true;
-  }
+  render();
 }
 
-init();
+setup();

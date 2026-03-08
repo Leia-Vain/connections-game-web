@@ -1,0 +1,117 @@
+window.RICHEST_PARTNER_DATA = {
+  "title": "10 Richest People With Known Partner Ages",
+  "as_of_date": "2026-03-08",
+  "forbes_list_year": 2025,
+  "rows": [
+    {
+      "rank": 2,
+      "person_name": "Mark Zuckerberg",
+      "worth_billion_usd": 216.0,
+      "billionaire_age": 40,
+      "partner_name": "Priscilla Chan",
+      "partner_age": 41,
+      "age_gap_partner_minus_billionaire": 1,
+      "forbes_source": "https://www.forbes.com/billionaires/",
+      "partner_source": "https://en.wikipedia.org/wiki/Priscilla_Chan"
+    },
+    {
+      "rank": 3,
+      "person_name": "Jeff Bezos",
+      "worth_billion_usd": 215.0,
+      "billionaire_age": 61,
+      "partner_name": "Lauren Sanchez Bezos",
+      "partner_age": 56,
+      "age_gap_partner_minus_billionaire": -5,
+      "forbes_source": "https://www.forbes.com/billionaires/",
+      "partner_source": "https://en.wikipedia.org/wiki/Lauren_S%C3%A1nchez_Bezos"
+    },
+    {
+      "rank": 5,
+      "person_name": "Bernard Arnault & family",
+      "worth_billion_usd": 178.0,
+      "billionaire_age": 76,
+      "partner_name": "Helene Mercier-Arnault",
+      "partner_age": 66,
+      "age_gap_partner_minus_billionaire": -10,
+      "forbes_source": "https://www.forbes.com/billionaires/",
+      "partner_source": "https://en.wikipedia.org/wiki/H%C3%A9l%C3%A8ne_Mercier-Arnault"
+    },
+    {
+      "rank": 9,
+      "person_name": "Amancio Ortega",
+      "worth_billion_usd": 124.0,
+      "billionaire_age": 89,
+      "partner_name": "Flora Perez Marcote",
+      "partner_age": 73,
+      "age_gap_partner_minus_billionaire": -16,
+      "forbes_source": "https://www.forbes.com/billionaires/",
+      "partner_source": "https://es.wikipedia.org/wiki/Flora_P%C3%A9rez"
+    },
+    {
+      "rank": 14,
+      "person_name": "Michael Bloomberg",
+      "worth_billion_usd": 105.0,
+      "billionaire_age": 83,
+      "partner_name": "Diana Taylor",
+      "partner_age": 71,
+      "age_gap_partner_minus_billionaire": -12,
+      "forbes_source": "https://www.forbes.com/billionaires/",
+      "partner_source": "https://en.wikipedia.org/wiki/Diana_Taylor_(superintendent)"
+    },
+    {
+      "rank": 18,
+      "person_name": "Mukesh Ambani",
+      "worth_billion_usd": 92.5,
+      "billionaire_age": 67,
+      "partner_name": "Nita Ambani",
+      "partner_age": 62,
+      "age_gap_partner_minus_billionaire": -5,
+      "forbes_source": "https://www.forbes.com/billionaires/",
+      "partner_source": "https://en.wikipedia.org/wiki/Nita_Ambani"
+    },
+    {
+      "rank": 44,
+      "person_name": "Gianluigi Aponte",
+      "worth_billion_usd": 37.7,
+      "billionaire_age": 84,
+      "partner_name": "Rafaela Aponte-Diamant",
+      "partner_age": 80,
+      "age_gap_partner_minus_billionaire": -4,
+      "forbes_source": "https://www.forbes.com/billionaires/",
+      "partner_source": "https://en.wikipedia.org/wiki/Rafaela_Aponte-Diamant"
+    },
+    {
+      "rank": 82,
+      "person_name": "Eric Schmidt",
+      "worth_billion_usd": 24.0,
+      "billionaire_age": 69,
+      "partner_name": "Wendy Schmidt",
+      "partner_age": 70,
+      "age_gap_partner_minus_billionaire": 1,
+      "forbes_source": "https://www.forbes.com/billionaires/",
+      "partner_source": "https://en.wikipedia.org/wiki/Wendy_Schmidt"
+    },
+    {
+      "rank": 93,
+      "person_name": "Fran\u00e7ois Pinault & family",
+      "worth_billion_usd": 21.7,
+      "billionaire_age": 88,
+      "partner_name": "Salma Hayek",
+      "partner_age": 59,
+      "age_gap_partner_minus_billionaire": -29,
+      "forbes_source": "https://www.forbes.com/billionaires/",
+      "partner_source": "https://en.wikipedia.org/wiki/Salma_Hayek"
+    },
+    {
+      "rank": 119,
+      "person_name": "Dustin Moskovitz",
+      "worth_billion_usd": 17.0,
+      "billionaire_age": 40,
+      "partner_name": "Cari Tuna",
+      "partner_age": 40,
+      "age_gap_partner_minus_billionaire": 0,
+      "forbes_source": "https://www.forbes.com/billionaires/",
+      "partner_source": "https://en.wikipedia.org/wiki/Cari_Tuna"
+    }
+  ]
+};

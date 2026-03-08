@@ -3,37 +3,86 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Connections Game</title>
+  <title>Richest 10: Worth, Age, Partner Age</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="app">
-    <header class="top">
-      <h1 id="title">Connections</h1>
-      <p id="subtitle">Pick four words that share a connection.</p>
+    <header class="hero">
+      <p class="eyebrow">Interactive Platform</p>
+      <h1>10 Richest People With Known Partner Ages</h1>
+      <p id="subhead"></p>
     </header>
 
-    <section class="hud">
-      <div class="pill">Mistakes Left: <strong id="mistakes-left">4</strong></div>
-      <div class="pill">Found: <strong id="found-count">0 / 4</strong></div>
-      <div class="pill">Selected: <strong id="selected-count">0 / 4</strong></div>
+    <section class="controls card">
+      <label>
+        Search
+        <input id="search" type="search" placeholder="Name or partner">
+      </label>
+      <label>
+        Sort by
+        <select id="sort">
+          <option value="rank">Rank (richest first)</option>
+          <option value="worth">Worth (high to low)</option>
+          <option value="partner_age">Partner age (high to low)</option>
+          <option value="age_gap">Age gap (partner - billionaire)</option>
+        </select>
+      </label>
+      <label>
+        Minimum worth: <span id="worth-label"></span>
+        <input id="min-worth" type="range" min="0" max="400" step="1" value="0">
+      </label>
+      <button id="reset" type="button">Reset</button>
     </section>
 
-    <section id="message" class="message" aria-live="polite"></section>
+    <section class="metrics">
+      <article class="card metric">
+        <h2>Avg Worth</h2>
+        <p id="avg-worth">-</p>
+      </article>
+      <article class="card metric">
+        <h2>Avg Billionaire Age</h2>
+        <p id="avg-rich-age">-</p>
+      </article>
+      <article class="card metric">
+        <h2>Avg Partner Age</h2>
+        <p id="avg-partner-age">-</p>
+      </article>
+      <article class="card metric">
+        <h2>Avg Partner - Billionaire Gap</h2>
+        <p id="avg-gap">-</p>
+      </article>
+    </section>
 
-    <section id="solved-groups" class="solved-groups"></section>
+    <section class="grid">
+      <article class="card">
+        <h2>Scatter: Worth vs Partner Age</h2>
+        <svg id="scatter" viewBox="0 0 680 360" role="img" aria-label="Scatter plot of worth vs partner age"></svg>
+      </article>
 
-    <section id="board" class="board" aria-label="Connections board"></section>
-
-    <section class="actions">
-      <button id="submit-btn" type="button">Submit</button>
-      <button id="deselect-btn" type="button">Deselect All</button>
-      <button id="shuffle-btn" type="button">Shuffle</button>
-      <button id="restart-btn" type="button">Restart</button>
+      <article class="card">
+        <h2>Data Table</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Person</th>
+                <th>Worth (B USD)</th>
+                <th>Age</th>
+                <th>Partner</th>
+                <th>Partner Age</th>
+                <th>Gap</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </article>
     </section>
   </main>
 
-  <script src="puzzle-config.js"></script>
+  <script src="data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
