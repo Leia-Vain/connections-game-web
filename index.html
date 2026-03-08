@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connections Game</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <h1 id="title">Connections</h1>
+      <p id="subtitle">Pick four words that share a connection.</p>
+    </header>
+
+    <section class="hud">
+      <div class="pill">Mistakes Left: <strong id="mistakes-left">4</strong></div>
+      <div class="pill">Found: <strong id="found-count">0 / 4</strong></div>
+      <div class="pill">Selected: <strong id="selected-count">0 / 4</strong></div>
+    </section>
+
+    <section id="message" class="message" aria-live="polite"></section>
+
+    <section id="solved-groups" class="solved-groups"></section>
+
+    <section id="board" class="board" aria-label="Connections board"></section>
+
+    <section class="actions">
+      <button id="submit-btn" type="button">Submit</button>
+      <button id="deselect-btn" type="button">Deselect All</button>
+      <button id="shuffle-btn" type="button">Shuffle</button>
+      <button id="restart-btn" type="button">Restart</button>
+    </section>
+  </main>
+
+  <script src="puzzle-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

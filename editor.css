@@ -1,0 +1,145 @@
+:root {
+  --bg: #f6f8fc;
+  --panel: #ffffff;
+  --line: #d4dceb;
+  --text: #17263f;
+  --muted: #5b6b86;
+  --accent: #0d6e8a;
+  --error: #8f2020;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 8% 0%, #e6edf9 0%, transparent 38%),
+    radial-gradient(circle at 92% 12%, #fff0db 0%, transparent 38%),
+    var(--bg);
+}
+
+.app {
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 20px 14px 32px;
+}
+
+h1 {
+  margin: 0 0 8px;
+}
+
+header p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.meta-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+input,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+textarea {
+  border: 1px solid #bfcbdd;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-weight: 400;
+}
+
+.groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.group-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.group-card h2 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.words {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+button {
+  border: 1px solid #bec8da;
+  background: #fff;
+  border-radius: 8px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#save-local,
+#share-link-btn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.small-actions {
+  margin-top: 8px;
+}
+
+.note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.status {
+  min-height: 26px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #edf3ff;
+  color: #1e3e70;
+}
+
+.status.error {
+  background: #ffe2e2;
+  color: var(--error);
+}

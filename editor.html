@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connections Puzzle Editor</title>
+  <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>Connections Puzzle Editor</h1>
+      <p>Build your 4x4 puzzle here. Share only the game link, not this editor page.</p>
+    </header>
+
+    <section class="card meta-grid">
+      <label>
+        Title
+        <input id="title" type="text" placeholder="Connections">
+      </label>
+      <label>
+        Subtitle
+        <input id="subtitle" type="text" placeholder="Pick four words that share a connection.">
+      </label>
+      <label>
+        Max mistakes
+        <input id="mistakes" type="number" min="1" max="10" value="4">
+      </label>
+    </section>
+
+    <section id="groups" class="groups"></section>
+
+    <section class="card actions">
+      <button id="save-local" type="button">Save Local Puzzle</button>
+      <button id="open-game" type="button">Open Game (local puzzle)</button>
+      <button id="share-link-btn" type="button">Generate Short Share Link</button>
+      <button id="clear-local" type="button">Clear Local Puzzle</button>
+    </section>
+
+    <section class="card">
+      <h2>Share Link</h2>
+      <textarea id="share-link" rows="4" readonly></textarea>
+      <div class="small-actions">
+        <button id="copy-link" type="button">Copy Link</button>
+      </div>
+      <p class="note">Anyone opening this link gets play mode only. Your editor remains private on this page.</p>
+    </section>
+
+    <section id="status" class="status" aria-live="polite"></section>
+  </main>
+
+  <script src="puzzle-config.js"></script>
+  <script src="editor.js"></script>
+</body>
+</html>
