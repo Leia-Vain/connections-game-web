@@ -3,6 +3,7 @@
 const PUZZLE_STORAGE_KEY = "connections_custom_puzzle_v1";
 const GROUP_COUNT = 4;
 const WORDS_PER_GROUP = 4;
+const DEFAULT_PUBLIC_GAME_URL = "https://leia-vain.github.io/connections-game-web/index.html";
 
 const els = {
   title: document.getElementById("title"),
@@ -71,6 +72,9 @@ function serializeShortPuzzle(puzzle) {
 }
 
 function gamePageUrl() {
+  if (window.location.protocol === "file:") {
+    return DEFAULT_PUBLIC_GAME_URL;
+  }
   return new URL("index.html", window.location.href).href;
 }
 
